@@ -23,10 +23,9 @@ jobs:
         with:
           node-version: 20
 
-      # Installer Python dependencies
+      # Installer Python dependencies via requirements.txt
       - name: Install Python dependencies
-        run: |
-          pip install fastapi uvicorn pydantic
+        run: pip install -r backend/requirements.txt
 
       # Start backend i baggrunden + log
       - name: Start backend
@@ -46,10 +45,10 @@ jobs:
           nohup serve frontend -l 3000 > frontend.log 2>&1 &
           sleep 2
 
-      # Vent på serverne er klar
+      # Vent på serverne er klar (kun baseroot, ikke /tenders)
       - name: Wait for servers
         run: |
-          npx wait-on http://localhost:8000/tenders http://localhost:3000 --timeout 60000
+          npx wait-on http://localhost:8000 http://localhost:3000 --timeout 60000
 
       # Installer Playwright browsers
       - name: Install Playwright Browsers
@@ -70,8 +69,8 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      # Hvis backend fejler: vis logs
-      - name: Show backend logs on failure
+      # Hvis backend/frontend fejler: vis logs
+      - name: Show logs on failure
         if: failure()
         run: |
           echo "==== Backend logs ===="
