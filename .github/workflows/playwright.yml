@@ -20,18 +20,6 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
-      frontend:
-        image: node:18
-        ports:
-          - 3000:3000
-        options: >-
-          --health-cmd "curl --fail http://localhost:3000 || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-        working-directory: /app
-        command: sh -c "npm install && npm run start"
-
     steps:
       - uses: actions/checkout@v3
 
@@ -45,18 +33,24 @@ jobs:
         with:
           python-version: 3.11
 
-      # Vent lidt for at sikre, at backend og frontend er klar
-      - name: Wait for servers
-        run: sleep 15
-
-      # Installer Playwright og browsere
-      - name: Install dependencies
+      # Installer frontend dependencies og start server
+      - name: Start frontend
         run: |
           npm install
-          npx playwright install --with-deps
+          npm run start &
 
-      # Sæt miljøvariabel for frontend URL
-      - name: Set environment variables
+      # Vent på at backend og frontend er klar
+      - name: Wait for servers
+        run: |
+          npx wait-on http://localhost:3000
+          npx wait-on http://localhost:8000/tenders
+
+      # Installer Playwright og browsere
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      # Sæt frontend URL som miljøvariabel
+      - name: Set environment variable
         run: echo "FRONTEND_URL=http://localhost:3000" >> $GITHUB_ENV
 
       # Kør Playwright-tests headless
