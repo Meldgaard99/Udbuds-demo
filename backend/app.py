@@ -18,7 +18,7 @@ def create_tender(tender: Tender):
     tenders.append(tender.dict())
     return tender
 
-
+# Healthcheck endpoint
 @app.get("/health")
 def health():
     return {"status": "ok"}

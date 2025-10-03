@@ -11,13 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      # Checkout koden
       - uses: actions/checkout@v4
 
+      # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -45,11 +48,11 @@ jobs:
           nohup serve frontend -l 3000 > frontend.log 2>&1 &
           sleep 2
 
-      # Vent på serverne er klar (kun baseroot, ikke /tenders)
+      # Vent på serverne er klar
       - name: Wait for servers
         run: |
-          npx wait-on http://localhost:8000/health http://localhost:3000 --timeout 60000
-          
+          npx wait-on http-get://localhost:8000/health http://localhost:3000 --timeout 60000
+
       # Installer Playwright browsers
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
@@ -69,7 +72,7 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      # Hvis backend/frontend fejler: vis logs
+      # Vis logs hvis noget fejler
       - name: Show logs on failure
         if: failure()
         run: |
