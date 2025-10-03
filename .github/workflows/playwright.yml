@@ -16,24 +16,33 @@ jobs:
         ports:
           - 8000:80
         options: >-
-          --health-cmd "curl --fail http://localhost:80/tenders || exit 1"
+          --health-cmd "curl --fail http://backend:80/tenders || exit 1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     steps:
+      # 1. Hent koden
       - uses: actions/checkout@v3
 
+      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 3. Installer dependencies
       - name: Install dependencies
         run: |
           npm install
           npx playwright install --with-deps
 
+      # 4. Vent på backend er klar
+      - name: Wait for backend
+        run: |
+          echo "Venter 10 sekunder på backend..."
+          sleep 10
+
+      # 5. Kør Playwright tests
       - name: Run Playwright tests
         run: npx playwright test
-
