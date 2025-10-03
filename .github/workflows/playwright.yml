@@ -58,4 +58,4 @@ jobs:
 
       # 10. Kør Playwright-tests
       - name: Run Playwright tests
-        run: npx playwright test
+        run: xvfb-run npx playwright test
