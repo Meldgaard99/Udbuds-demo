@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -19,21 +19,22 @@ jobs:
           python-version: '3.11'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       # Installer Python dependencies
       - name: Install Python dependencies
         run: |
           pip install fastapi uvicorn pydantic
 
-      # Start backend
+      # Start backend i baggrunden + log
       - name: Start backend
         run: |
           cd backend
-          uvicorn app:app --host 0.0.0.0 --port 8000 &
+          nohup uvicorn app:app --host 0.0.0.0 --port 8000 > ../uvicorn.log 2>&1 &
           cd ..
+          sleep 5
 
       # Installer serve globalt
       - name: Install serve
@@ -42,7 +43,8 @@ jobs:
       # Start frontend med serve
       - name: Start frontend
         run: |
-          serve frontend -l 3000 &
+          nohup serve frontend -l 3000 > frontend.log 2>&1 &
+          sleep 2
 
       # Vent på serverne er klar
       - name: Wait for servers
@@ -67,3 +69,12 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+      # Hvis backend fejler: vis logs
+      - name: Show backend logs on failure
+        if: failure()
+        run: |
+          echo "==== Backend logs ===="
+          cat uvicorn.log || true
+          echo "==== Frontend logs ===="
+          cat frontend.log || true
