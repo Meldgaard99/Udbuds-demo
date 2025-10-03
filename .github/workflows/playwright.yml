@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Playwright Full Stack Tests
 
 on:
   push:
@@ -16,33 +16,74 @@ jobs:
         ports:
           - 8000:80
         options: >-
-          --health-cmd "curl --fail http://backend:80/tenders || exit 1"
+          --health-cmd "curl --fail http://localhost:80/tenders || exit 1"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+
+      frontend:
+        image: node:18
+        ports:
+          - 3000:3000
+        options: >-
+          --health-cmd "curl --fail http://localhost:3000 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
-      # 1. Hent koden
       - uses: actions/checkout@v3
 
-      # 2. Setup Node.js
+      # Setup Python (backend)
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install backend dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install fastapi uvicorn
+
+      # Setup Node.js (frontend + Playwright)
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # 3. Installer dependencies
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: |
           npm install
           npx playwright install --with-deps
 
-      # 4. Vent på backend er klar
+      # Start backend (lokalt, hvis du vil teste også uden container)
+      - name: Start backend locally
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          uvicorn main:app --host 0.0.0.0 --port 8000 &
+
+      # Start frontend lokalt (React/JS)
+      - name: Start frontend locally
+        run: |
+          npm start &
+
+      # Vent på at backend og frontend er klar
       - name: Wait for backend
         run: |
-          echo "Venter 10 sekunder på backend..."
-          sleep 10
+          echo "Venter på backend..."
+          until curl --fail http://localhost:8000/tenders; do
+            sleep 2
+          done
 
-      # 5. Kør Playwright tests
+      - name: Wait for frontend
+        run: |
+          echo "Venter på frontend..."
+          until curl --fail http://localhost:3000; do
+            sleep 2
+          done
+
+      # Kør Playwright tests
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --headed
