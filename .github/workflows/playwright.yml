@@ -9,50 +9,63 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      backend:
-        image: tiangolo/uvicorn-gunicorn-fastapi:python3.11
-        ports:
-          - 8000:80
-        options: >-
-          --health-cmd "curl --fail http://localhost:80/tenders || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
+    
     steps:
       - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
+      # Installer backend dependencies (tilpas til dine requirements)
+      - name: Install Python dependencies
+        run: |
+          pip install fastapi uvicorn pydantic
 
-      # Installer frontend dependencies og start server
+      # Start backend
+      - name: Start backend
+        run: |
+          cd backend
+          uvicorn app:app --host 0.0.0.0 --port 8000 &
+          cd ..
+        # Antager backend ligger i /backend folder
+
+      # Installer serve globalt
+      - name: Install serve
+        run: npm install -g serve
+
+      # Start frontend med serve
       - name: Start frontend
         run: |
-          npm install
-          npm run start &
+          serve frontend -l 3000 &
+        # Antager frontend ligger i /frontend folder
 
-      # Vent på at backend og frontend er klar
+      # Vent på serverne er klar
       - name: Wait for servers
         run: |
-          npx wait-on http://localhost:3000
-          npx wait-on http://localhost:8000/tenders
+          npx wait-on http://localhost:8000/tenders http://localhost:3000 --timeout 60000
 
-      # Installer Playwright og browsere
+      # Installer Playwright
       - name: Install Playwright
-        run: npx playwright install --with-deps
+        run: |
+          npm install -D @playwright/test
+          npx playwright install --with-deps chromium
 
-      # Sæt frontend URL som miljøvariabel
-      - name: Set environment variable
-        run: echo "FRONTEND_URL=http://localhost:3000" >> $GITHUB_ENV
-
-      # Kør Playwright-tests headless
+      # Kør tests
       - name: Run Playwright tests
-        run: xvfb-run npx playwright test
+        run: npx playwright test
+
+      # Upload resultater ved fejl
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
