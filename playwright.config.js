@@ -5,9 +5,8 @@ export default defineConfig({
     retries: 1,
     reporter: 'list',
     use: {
-        headless: false,           // altid synlig browser
-        launchOptions: {
-            slowMo: 500              // 500ms pause mellem handlinger
+        headless: true,           // headless i CI
+        screenshot: 'only-on-failure',
+        video: 'retain-on-failure',
         }
-    }
 });

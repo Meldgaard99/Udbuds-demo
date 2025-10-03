@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 18
 
-      # Installer backend dependencies (tilpas til dine requirements)
+      # Installer Python dependencies
       - name: Install Python dependencies
         run: |
           pip install fastapi uvicorn pydantic
@@ -34,7 +34,6 @@ jobs:
           cd backend
           uvicorn app:app --host 0.0.0.0 --port 8000 &
           cd ..
-        # Antager backend ligger i /backend folder
 
       # Installer serve globalt
       - name: Install serve
@@ -44,24 +43,23 @@ jobs:
       - name: Start frontend
         run: |
           serve frontend -l 3000 &
-        # Antager frontend ligger i /frontend folder
 
       # Vent på serverne er klar
       - name: Wait for servers
         run: |
           npx wait-on http://localhost:8000/tenders http://localhost:3000 --timeout 60000
 
-      # Installer Playwright
-      - name: Install Playwright
-        run: |
-          npm install -D @playwright/test
-          npx playwright install --with-deps chromium
+      # Installer Playwright browsers
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
-      # Kør tests
+      # Kør tests i headless mode
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --config=playwright.config.ci.js
+        env:
+          FRONTEND_URL: http://localhost:3000
 
-      # Upload resultater ved fejl
+      # Upload test results ved fejl
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v3

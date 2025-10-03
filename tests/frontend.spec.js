@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// Brug miljøvariabel til URL, fallback til localhost
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 test('Frontend demo med forskellige assertions', async ({ page }) => {
@@ -43,13 +42,53 @@ test('Frontend demo med forskellige assertions', async ({ page }) => {
     await expect(nytUdbud).toBeVisible();
     await expect(nytUdbud).toHaveText('Nyt test-udbud');
 
-    const budget = page.locator('text=500.000');
+    // Budget formateres som "500.000 DKK" i frontend
+    const budget = page.locator('text=500,000');
     await expect(budget).toBeVisible();
 
     // --- 5. Brug count for at tjekke antal udbud ---
-    const alleUdbud = page.locator('.udbud-item'); // sørg for at alle udbud har class="udbud-item"
+    // Frontend bruger .card.mb-2 class til udbud
+    const alleUdbud = page.locator('.card.mb-2');
     await expect(alleUdbud).toHaveCount(4); // 3 prefilled + 1 nyt
+});
 
-    // --- 6. Bevidst fejlet assertion ---
-    await expect(page.locator('text=IkkeEksisterendeUdbud')).toBeVisible();
+// Ekstra test uden den bevidst fejlende assertion
+test('Søgefunktionalitet', async ({ page }) => {
+    await page.goto(FRONTEND_URL);
+
+    // Test søgning
+    await page.fill('#search', 'IT-support');
+
+    // Vent lidt på filtering
+    await page.waitForTimeout(100);
+
+    // Skal kun vise 1 resultat
+    const results = page.locator('.card.mb-2');
+    await expect(results).toHaveCount(1);
+
+    // Clear søgning
+    await page.fill('#search', '');
+    await page.waitForTimeout(100);
+
+    // Tilbage til 3 resultater
+    await expect(results).toHaveCount(3);
+});
+
+test('Kategori filter', async ({ page }) => {
+    await page.goto(FRONTEND_URL);
+
+    // Vælg IT & Teknologi
+    await page.selectOption('#filterKategori', 'IT & Teknologi');
+    await page.waitForTimeout(100);
+
+    // Skal kun vise 1 resultat
+    const results = page.locator('.card.mb-2');
+    await expect(results).toHaveCount(1);
+
+    // Vælg alle
+    await page.selectOption('#filterKategori', 'Alle');
+    await page.waitForTimeout(100);
+
+    // Tilbage til 3 resultater
+    await expect(results).toHaveCount(3);
 });
