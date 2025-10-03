@@ -1,4 +1,4 @@
-name: Playwright Full Stack Tests
+name: Playwright Tests
 
 on:
   push:
@@ -10,80 +10,52 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      backend:
-        image: tiangolo/uvicorn-gunicorn-fastapi:python3.11
-        ports:
-          - 8000:80
-        options: >-
-          --health-cmd "curl --fail http://localhost:80/tenders || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
-      frontend:
-        image: node:18
-        ports:
-          - 3000:3000
-        options: >-
-          --health-cmd "curl --fail http://localhost:3000 || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     steps:
+      # 1. Tjekk kildekoden ud
       - uses: actions/checkout@v3
 
-      # Setup Python (backend)
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install backend dependencies
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install fastapi uvicorn
-
-      # Setup Node.js (frontend + Playwright)
+      # 2. Setup Node.js til frontend og Playwright
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 3. Installér frontend afhængigheder
       - name: Install frontend dependencies
-        run: |
-          npm install
-          npx playwright install --with-deps
+        run: npm install
 
-      # Start backend (lokalt, hvis du vil teste også uden container)
-      - name: Start backend locally
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          uvicorn main:app --host 0.0.0.0 --port 8000 &
+      # 4. Setup Python til backend
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
 
-      # Start frontend lokalt (React/JS)
-      - name: Start frontend locally
+      # 5. Installér backend afhængigheder
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn pydantic
+
+      # 6. Start backend i baggrunden
+      - name: Start backend
+        run: |
+          uvicorn main:app --host 0.0.0.0 --port 3001 &
+          echo "Backend started"
+      
+      # 7. Start frontend i baggrunden
+      - name: Start frontend
         run: |
           npm start &
+          echo "Frontend started"
 
-      # Vent på at backend og frontend er klar
-      - name: Wait for backend
-        run: |
-          echo "Venter på backend..."
-          until curl --fail http://localhost:8000/tenders; do
-            sleep 2
-          done
+      # 8. Vent lidt for at sikre at serverne er oppe
+      - name: Wait for servers
+        run: sleep 10
 
-      - name: Wait for frontend
-        run: |
-          echo "Venter på frontend..."
-          until curl --fail http://localhost:3000; do
-            sleep 2
-          done
+      # 9. Installér Playwright browsere
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
 
-      # Kør Playwright tests
+      # 10. Kør Playwright-tests
       - name: Run Playwright tests
-        run: npx playwright test --headed
+        run: npx playwright test
