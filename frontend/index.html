@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UdbudsPortal Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>UdbudsPortal</h1>
+        <button id="toggleFormBtn" class="btn btn-primary">Opret Udbud</button>
+    </div>
+
+    <!-- Nyt udbud formular -->
+    <div id="udbudFormContainer" class="card mb-4 p-3 d-none">
+        <form id="udbudForm">
+            <div class="mb-2">
+                <input type="text" id="titel" class="form-control" placeholder="Titel" required>
+            </div>
+            <div class="mb-2">
+                <select id="kategori" class="form-select">
+                    <option>IT & Teknologi</option>
+                    <option>Byggeri & Anlæg</option>
+                    <option>Indkøb</option>
+                    <option>Konsulentydelser</option>
+                    <option>Transport</option>
+                </select>
+            </div>
+            <div class="mb-2">
+                <input type="date" id="deadline" class="form-control" required>
+            </div>
+            <div class="mb-2">
+                <input type="number" id="budget" class="form-control" placeholder="Budget" required>
+            </div>
+            <div class="mb-2">
+                <input type="text" id="organisation" class="form-control" placeholder="Organisation" required>
+            </div>
+            <div class="mb-2">
+                <textarea id="beskrivelse" class="form-control" placeholder="Beskrivelse"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">Opret</button>
+            <button type="button" id="cancelFormBtn" class="btn btn-secondary">Annuller</button>
+        </form>
+    </div>
+
+    <!-- Søg og filter -->
+    <div class="input-group mb-3">
+        <input type="text" id="search" class="form-control" placeholder="Søg titel eller organisation">
+        <select id="filterKategori" class="form-select">
+            <option value="Alle">Alle kategorier</option>
+            <option>IT & Teknologi</option>
+            <option>Byggeri & Anlæg</option>
+            <option>Indkøb</option>
+            <option>Konsulentydelser</option>
+            <option>Transport</option>
+        </select>
+    </div>
+
+    <!-- Udbudsliste -->
+    <div id="udbudList"></div>
+</div>
+
+<script>
+    const udbudListEl = document.getElementById('udbudList');
+    const udbudFormContainer = document.getElementById('udbudFormContainer');
+    const toggleFormBtn = document.getElementById('toggleFormBtn');
+    const cancelFormBtn = document.getElementById('cancelFormBtn');
+    const udbudForm = document.getElementById('udbudForm');
+    const searchInput = document.getElementById('search');
+    const filterKategori = document.getElementById('filterKategori');
+
+    let udbud = [
+        {id: 1, titel: "IT-support til kommunal forvaltning", kategori:"IT & Teknologi", deadline:"2025-11-15", budget:"2500000", organisation:"Aarhus Kommune", status:"Åben"},
+        {id: 2, titel:"Bygningsentreprise - Renovering af skolebygning", kategori:"Byggeri & Anlæg", deadline:"2025-10-28", budget:"15000000", organisation:"Region Midtjylland", status:"Åben"},
+        {id:3, titel:"Levering af kontormøbler", kategori:"Indkøb", deadline:"2025-10-20", budget:"750000", organisation:"Statens IT", status:"Lukket"}
+    ];
+
+    function renderUdbud() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const kategoriFilter = filterKategori.value;
+        udbudListEl.innerHTML = '';
+        const filtered = udbud.filter(u => {
+            const matchSearch = u.titel.toLowerCase().includes(searchTerm) || u.organisation.toLowerCase().includes(searchTerm);
+            const matchKategori = kategoriFilter === 'Alle' || u.kategori === kategoriFilter;
+            return matchSearch && matchKategori;
+        });
+
+        if(filtered.length === 0){
+            udbudListEl.innerHTML = `<div class="card p-4 text-center">Ingen udbud matcher dine kriterier</div>`;
+        } else {
+            filtered.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'card mb-2 p-3';
+                div.innerHTML = `
+            <div class="d-flex justify-content-between">
+              <strong>${u.titel}</strong>
+              <span class="badge ${u.status==="Åben"?"bg-success":"bg-secondary"}">${u.status}</span>
+            </div>
+            <div class="text-muted">${u.kategori} | ${u.organisation} | Deadline: ${u.deadline} | Budget: ${parseInt(u.budget).toLocaleString()} DKK</div>
+          `;
+                udbudListEl.appendChild(div);
+            });
+        }
+    }
+
+    toggleFormBtn.addEventListener('click', () => udbudFormContainer.classList.toggle('d-none'));
+    cancelFormBtn.addEventListener('click', () => udbudFormContainer.classList.add('d-none'));
+
+    udbudForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const formData = {
+            id: udbud.length+1,
+            titel: document.getElementById('titel').value,
+            kategori: document.getElementById('kategori').value,
+            deadline: document.getElementById('deadline').value,
+            budget: document.getElementById('budget').value,
+            organisation: document.getElementById('organisation').value,
+            status:"Åben"
+        };
+        udbud.unshift(formData);
+        udbudForm.reset();
+        udbudFormContainer.classList.add('d-none');
+        renderUdbud();
+    });
+
+    searchInput.addEventListener('input', renderUdbud);
+    filterKategori.addEventListener('change', renderUdbud);
+
+    renderUdbud();
+</script>
+</body>
+</html>
