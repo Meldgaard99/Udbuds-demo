@@ -48,8 +48,8 @@ jobs:
       # Vent på serverne er klar (kun baseroot, ikke /tenders)
       - name: Wait for servers
         run: |
-          npx wait-on http://localhost:8000 http://localhost:3000 --timeout 60000
-
+          npx wait-on http://localhost:8000/health http://localhost:3000 --timeout 60000
+          
       # Installer Playwright browsers
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
