@@ -1,12 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+// Brug miljøvariabel til URL, fallback til localhost
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 test('Frontend demo med forskellige assertions', async ({ page }) => {
     // --- 1. Åbn siden ---
-    await page.goto('http://localhost:3000');
+    await page.goto(FRONTEND_URL);
 
     // Tjek side title og URL
     await expect(page).toHaveTitle(/UdbudsPortal/);
-    await expect(page).toHaveURL(/localhost:3000/);
+    await expect(page).toHaveURL(new RegExp(FRONTEND_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 
     // --- 2. Tjek synlighed og tekst på elementer ---
     const header = page.locator('text=UdbudsPortal');
