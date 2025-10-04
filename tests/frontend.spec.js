@@ -42,9 +42,11 @@ test('Frontend demo med forskellige assertions', async ({ page }) => {
     await expect(nytUdbud).toBeVisible();
     await expect(nytUdbud).toHaveText('Nyt test-udbud');
 
-    // Budget formateres som "500.000 DKK" i frontend
-    const budget = page.locator('text=500,000');
-    await expect(budget).toBeVisible();
+    // Tjek budget i det nye udbud - brug en mere specifik locator
+    const nytUdbudCard = page.locator('.card.mb-2').filter({ hasText: 'Nyt test-udbud' });
+    await expect(nytUdbudCard).toBeVisible();
+    await expect(nytUdbudCard).toContainText('500,000 DKK');
+    await expect(nytUdbudCard).toContainText('Test Kommune');
 
     // --- 5. Brug count for at tjekke antal udbud ---
     // Frontend bruger .card.mb-2 class til udbud
