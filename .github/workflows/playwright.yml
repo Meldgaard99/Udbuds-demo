@@ -59,7 +59,7 @@ jobs:
 
       # Kør tests i headless mode
       - name: Run Playwright tests
-        run: npx playwright test --config=playwright.config.ci
+        run: npx playwright test --config=playwright.config.js
         env:
           FRONTEND_URL: http://localhost:3000
 
