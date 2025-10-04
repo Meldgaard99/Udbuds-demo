@@ -79,13 +79,30 @@ test('Søgefunktionalitet', async ({ page }) => {
 test('Kategori filter', async ({ page }) => {
     await page.goto(FRONTEND_URL);
 
+    // Tjek at der er 3 udbud fra start
+    const results = page.locator('.card.mb-2');
+    await expect(results).toHaveCount(3);
+
     // Vælg IT & Teknologi
     await page.selectOption('#filterKategori', 'IT & Teknologi');
     await page.waitForTimeout(100);
 
     // Skal kun vise 1 resultat
-    const results = page.locator('.card.mb-2');
     await expect(results).toHaveCount(1);
+
+    // Verificer at det rigtige udbud vises
+    await expect(page.locator('text=IT-support til kommunal forvaltning')).toBeVisible();
+    await expect(page.locator('text=Bygningsentreprise')).not.toBeVisible();
+    await expect(page.locator('text=Levering af kontormøbler')).not.toBeVisible();
+
+    // Vælg Byggeri & Anlæg
+    await page.selectOption('#filterKategori', 'Byggeri & Anlæg');
+    await page.waitForTimeout(100);
+
+    // Skal også kun vise 1 resultat
+    await expect(results).toHaveCount(1);
+    await expect(page.locator('text=Bygningsentreprise')).toBeVisible();
+    await expect(page.locator('text=IT-support')).not.toBeVisible();
 
     // Vælg alle
     await page.selectOption('#filterKategori', 'Alle');
@@ -93,4 +110,7 @@ test('Kategori filter', async ({ page }) => {
 
     // Tilbage til 3 resultater
     await expect(results).toHaveCount(3);
+    await expect(page.locator('text=IT-support til kommunal forvaltning')).toBeVisible();
+    await expect(page.locator('text=Bygningsentreprise')).toBeVisible();
+    await expect(page.locator('text=Levering af kontormøbler')).toBeVisible();
 });
