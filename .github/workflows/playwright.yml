@@ -26,6 +26,10 @@ jobs:
         with:
           node-version: 20
 
+      # Installer Node.js dependencies (inkl. Playwright)
+      - name: Install Node.js dependencies
+        run: npm install
+
       # Installer Python dependencies via requirements.txt
       - name: Install Python dependencies
         run: pip install -r backend/requirements.txt
@@ -59,7 +63,7 @@ jobs:
 
       # Kør tests i headless mode
       - name: Run Playwright tests
-        run: npx playwright test --config=playwright.config.js
+        run: npx playwright test
         env:
           FRONTEND_URL: http://localhost:3000
 
