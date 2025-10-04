@@ -6,7 +6,7 @@ test('Frontend demo med forskellige assertions', async ({ page }) => {
     // --- 1. Åbn siden ---
     await page.goto(FRONTEND_URL);
 
-    // Tjek side title og URL
+    // Tjek side title og URLfff
     await expect(page).toHaveTitle(/UdbudsPortal/);
     await expect(page).toHaveURL(new RegExp(FRONTEND_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 
